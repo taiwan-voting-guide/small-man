@@ -20,7 +20,7 @@ app.event("app_mention", async ({ event, client, context }) => {
         client,
         context.botToken,
         event.channel,
-        "請提供舊法案與新法案 'old:' 'new:'"
+        "old:{舊條文} new:{新條文}"
       );
       return;
     }
