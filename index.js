@@ -14,27 +14,43 @@ const app = new bolt.App({
 
 app.event("app_mention", async ({ event, client, context }) => {
   try {
-    const text = event.text.replace(/<@.*>/, "").trim();
-    if (!text.includes("old:") || !text.includes("new:")) {
+    let text = event.text.replace(/<@.*>/, "").trim();
+
+    let prompt = ""
+    if (text.startsWith("法白") || text.startsWith("法律白話文")) {
+      text = text.replace(/法白|法律白話文/, "").trim()
+      prompt = `'${text}' 對小學生用直白一句話解釋這條法律的意義:`
+    } else if (text.startsWith("比較法條")) {
+      if (!text.includes("old:") || !text.includes("new:")) {
+        await sendMsg(
+          client,
+          context.botToken,
+          event.channel,
+          "比較法條 old:{舊條文} new:{新條文}"
+        );
+        return;
+      }
+      prompt = `old=舊法條 new=新法條 ${text} 100個中文字內解釋新舊條文之間的差異與改變意義:`
+    } else {
       await sendMsg(
         client,
         context.botToken,
         event.channel,
-        "old:{舊條文} new:{新條文}"
+        "法白 {法律案內文} 或 比較法條 old:{舊條文} new:{新條文}"
       );
       return;
     }
 
     const res = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `old=舊法條 new=新法條 ${text} 100個中文字內解釋新舊條文之間的差異與改變意義:`,
+      prompt,
       max_tokens: 256,
-      temperature: 0.5,
+      temperature: 0.6,
       top_p: 1,
       n: 1,
       stream: false,
       logprobs: null,
-      stop: "Old",
+      stop: "",
     });
 
     await sendMsg(
@@ -61,5 +77,6 @@ async function sendMsg(client, token, channel, text) {
 }
 
 (async () => {
+  console.log('start');
   await app.start(process.env.PORT || 3000);
 })();
